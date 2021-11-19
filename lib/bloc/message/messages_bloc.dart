@@ -1,0 +1,7 @@
+class MessageBloc {
+
+
+  fetchMessageList() async{
+
+  }
+}
