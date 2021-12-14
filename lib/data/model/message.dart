@@ -1,14 +1,14 @@
-class Message {
-  late String message;
+class MessageChat {
+  late String content;
   late bool isMy;
   late bool isImage;
   late String createdAt;
 
-  Message({required this.message, required this.isMy,
+  MessageChat({required this.content, required this.isMy,
   required this.createdAt, this.isImage = false});
 
-  Message.fromJson(Map<String, dynamic> json) {
-    message = json['message']  ?? "";
+  MessageChat.fromJson(Map<String, dynamic> json) {
+    content = json['message']  ?? "";
     isMy = json['isMy'];
     createdAt = json['createdAt'];
     isImage = json['isImage'] ?? false;
@@ -16,16 +16,18 @@ class Message {
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
-    data['message'] = message;
+    data['content'] = content;
     data['isMy'] = isMy;
     return data;
   }
 }
 
 class MessageListModel{
+
   late String chatId;
 
-  late List<Message> messages;
+
+  late List<MessageChat> messages;
 
   MessageListModel({required this.chatId, required this.messages});
 
@@ -33,4 +35,18 @@ class MessageListModel{
     chatId = json['chatId'] ?? "";
     messages = json["messages"];
   }
+}
+
+class MessageDatabase{
+
+  late String senderID;
+  late String receiverID;
+  late String content;
+  late bool isImage;
+  late String createAt;
+
+  MessageDatabase({required senderID, required receiverID,
+    required content, required isImage, required createAt});
+
+
 }
