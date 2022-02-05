@@ -1,4 +1,3 @@
-import 'package:chat_app/model/user.dart';
 import 'package:chat_app/utils/authentication_repository.dart';
 import 'package:equatable/equatable.dart';
 

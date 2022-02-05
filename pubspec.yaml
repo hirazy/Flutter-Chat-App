@@ -30,14 +30,16 @@ dependencies:
   flutter:
     sdk: flutter
 
-
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
   flutter_screenutil: ^5.0.0+2
 
+  # Get It
+  get_it: ^7.2.0
+
   # Socket IO
-  socket_io_client: ^1.0.1
+  socket_io_client: ^2.0.0-beta.4-nullsafety.0
 
   # SharePreferences
   shared_preferences: ^2.0.8
@@ -49,6 +51,10 @@ dependencies:
   firebase_core: ^1.9.0
   firebase_messaging: ^11.0.0
   flutter_local_notifications: ^9.0.2
+  firebase_auth: ^3.2.0
+
+  # WeChat Asset Picker
+  wechat_assets_picker: ^6.2.3
 
   # Image Picker
   image_picker: ^0.8.4+4
@@ -67,6 +73,51 @@ dependencies:
 
   # JSON
   json_serializable: ^6.0.1
+
+  #Emoji Picker
+  emoji_picker_flutter: ^1.0.8
+
+  # File Picker
+  file_picker: ^4.2.3
+
+  # Google Sigin
+  google_sign_in: ^5.2.1
+
+  # Mobx
+  mobx: ^2.0.5
+
+  # Intl
+  intl: ^0.17.0
+
+  # Sqlite
+  sqflite: ^2.0.0+4
+
+  #Location
+  geolocator: ^7.7.1
+
+  #Path Provider
+  path_provider: ^2.0.7
+
+  # Flutter Secure
+  flutter_secure_storage: ^5.0.2
+
+  # Flutter SVG
+  flutter_svg: ^0.23.0+1
+
+  # Flutter Toast
+  fluttertoast: ^8.0.8
+
+  #Provider
+  provider: ^6.0.2
+
+  # Cached Network Image
+  cached_network_image: ^3.2.0
+
+  # Async
+  async: ^2.8.1
+
+  # Image
+  image: ^3.1.1
 
 dev_dependencies:
   flutter_test:
@@ -89,6 +140,14 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  assets:
+    - assets/raw/
+    - assets/img/
+    - assets/img/ic_google.svg
+    - assets/raw/anim_signin.json
+    - assets/raw/anim_splash.json
+    - assets/img/ic_avatar.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

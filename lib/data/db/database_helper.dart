@@ -1,42 +1,53 @@
+import 'dart:core';
 import 'dart:io';
 
-import 'package:chat_app/model/user.dart';
+import 'package:chat_app/data/model/room.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 
-// class DatabaseHelper{
-//
-//   static final DatabaseHelper _instance = new DatabaseHelper.internal();
-//
-//   factory DatabaseHelper() => _instance;
-//
-//   static Database _db;
-//
-//   DatabaseHelper.internal();
-//
-//   Future<Database> get db async {
-//     if (_db != null) return _db;
-//     _db = await initDb();
-//     return _db;
-//   }
-//
-//   initDb() async {
-//     // Directory documentsDirectory = await getApplicationDocumentsDirectory();
-//     // String path = join(documentsDirectory.path, "main.db");
-//     // var theDb = await openDatabase(path, version: 1, onCreate: _onCreate);
-//     // return theDb;
-//   }
-//
-//   void _onCreate(Database db, int version) async {
-//     // When creating the db, create the table
-//     await db.execute(
-//         "CREATE TABLE User(id INTEGER PRIMARY KEY, firstname TEXT, lastname TEXT, dob TEXT)");
-//   }
-//
-//   // Future<List<UserDatabase>> getUser() async{
-//   //   var dbClient = await db;
-//   //   List<Map> list;
-//   //
-//   // }
-//
-// }
+class DatabaseHelper {
+
+  static const dbName = 'chat_app.db';
+
+  static final DatabaseHelper instance = DatabaseHelper._internal();
+  factory DatabaseHelper() => instance;
+
+  static Database? _db;
+
+  String colId = 'id';
+  String colName = 'name';
+  String colUsers = 'users';
+  String colMessages = 'messages';
+  String colPicture = 'picture';
+  String colCreatedTime = 'timeCreated';
+  String colUpdatedTime = 'timeUpdated';
+
+  DatabaseHelper._internal();
+
+  Future<Database?> get database async {
+    _db ??= await initializeDatabase();
+    return _db;
+  }
+
+  Future<Database> initializeDatabase() async {
+    // Get the directory path for both Android and iOS to store database.
+    Directory directory = await getApplicationDocumentsDirectory();
+    String path = directory.path + dbName;
+
+    // Open/create the database at a given path
+    var roomTable = await openDatabase(path, version: 1, onCreate: _createDb);
+    return roomTable;
+  }
+
+  /// Create Table
+  void _createDb(Database db, int newVersion) async {
+    await db.execute('CREATE TABLE $roomTable('
+        '$colId TEXT,'
+        '$colName TEXT,'
+        '$colUsers TEXT,'
+        '$colMessages TEXT,'
+        '$colPicture TEXT,'
+        '$colCreatedTime TEXT,'
+        '$colUpdatedTime TEXT)');
+  }
+}

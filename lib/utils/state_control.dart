@@ -11,7 +11,7 @@ class StateControl implements StateAbstractControl{
 
   @override
   void dispose() {
-    // TODO: implement dispose
+    streamController.close();
   }
 
   @override

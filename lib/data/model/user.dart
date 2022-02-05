@@ -1,20 +1,20 @@
-import 'package:chat_app/model/room.dart';
+import 'package:chat_app/data/model/room.dart';
 
-class Person {
+class UserPerson {
   String? id;
   String? email;
   String? name;
   String? picture;
   String? createdAt;
 
-  Person(
+  UserPerson(
       {required this.id,
       required this.email,
       required this.name,
       required this.picture,
       required this.createdAt});
 
-  Person.fromJson(Map<String, dynamic> json) {
+  UserPerson.fromJson(Map<String, dynamic> json) {
     id = json['id'];
     email = json['email'];
     name = json['name'];

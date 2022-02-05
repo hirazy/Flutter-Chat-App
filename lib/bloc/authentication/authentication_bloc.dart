@@ -2,8 +2,6 @@
 import 'dart:async';
 
 import 'package:bloc/bloc.dart';
-import 'package:chat_app/utils/authentication_repository.dart';
-import 'package:chat_app/utils/user_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'authentication_event.dart';
@@ -33,6 +31,10 @@ class AuthenticationBloc extends Bloc<AuthenticationEvent, AuthenticationState>{
 
   @override
   Stream<AuthenticationState> mapEventToState(AuthenticationEvent event) async*{
+
+  }
+
+  FutureOr<void> _getContent() async{
 
   }
 }

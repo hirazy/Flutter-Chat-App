@@ -12,4 +12,5 @@ class StreamControllerHelper{
   setLastIndex(index) {
     sink.add(index);
   }
+
 }
