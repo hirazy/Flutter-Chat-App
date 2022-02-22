@@ -6,7 +6,7 @@ Widget icAvatar(urlAvatar, width, height, callBack) {
     child: Container(
       margin: const EdgeInsets.only(left: 10.0),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(width),
+        borderRadius: BorderRadius.circular(width / 2),
         child: CachedNetworkImage(
           imageUrl: urlAvatar,
           width: width,

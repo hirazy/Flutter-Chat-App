@@ -1,20 +1,27 @@
+import 'dart:async';
 import 'dart:convert';
 
+import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:chat_app/bloc/shuffle/shuffle_bloc.dart';
 import 'package:chat_app/bloc/shuffle/shuffle_state.dart';
 import 'package:chat_app/constants/constant.dart';
 import 'package:chat_app/data/db/database_helper.dart';
+import 'package:chat_app/data/model/message.dart';
 import 'package:chat_app/data/model/room.dart';
 import 'package:chat_app/data/model/user.dart';
 import 'package:chat_app/helper/shared_preferences.dart';
 import 'package:chat_app/helper/socket_helper.dart';
-import 'package:chat_app/providers/room_provider.dart';
+import 'package:chat_app/providers/shuffle_provider.dart';
+import 'package:chat_app/providers/user_provider.dart';
 import 'package:chat_app/router/routes.dart';
 import 'package:chat_app/screen/shuffle/component/card_shuffle.dart';
 import 'package:chat_app/screen/shuffle/component/ic_avatar.dart';
 import 'package:chat_app/screen/signin/component/dialog_loading.dart';
-import 'package:chat_app/services/service_manager.dart';
+import 'package:chat_app/screen/signin/ui/signin.dart';
+import 'package:chat_app/services/api_service.dart';
+import 'package:chat_app/utils/notification_api.dart';
 import 'package:chat_app/utils/user_security_storage.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
@@ -35,14 +42,13 @@ class Shuffle extends StatefulWidget {
 }
 
 class ShuffleState extends State<StatefulWidget> {
-  ServiceManager serviceManager = new ServiceManager();
+  ApiService serviceManager = ApiService();
   int _selectedIndex = 0;
 
-  final SocketHelper _socketHelper = new SocketHelper();
-  final ScrollController _scrollController = new ScrollController();
-  final GlobalKey<State> _keyLoader = new GlobalKey<State>();
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey<State> _keyLoader = GlobalKey<State>();
 
-  static var userID = "61fac924f510a60016b3e7f4";
+  var userID = "";
 
   DatabaseHelper databaseHelper = DatabaseHelper();
 
@@ -56,6 +62,11 @@ class ShuffleState extends State<StatefulWidget> {
   List<UserPerson> listRoom = [
     UserPerson(id: "1", name: "", email: "", createdAt: "", picture: URL_ICON)
   ];
+
+  late Connectivity connectivity;
+  late StreamSubscription<ConnectivityResult> subscription;
+
+  bool _isLoading = true;
 
   Widget _buildDialog(BuildContext context) {
     return AlertDialog(
@@ -77,85 +88,92 @@ class ShuffleState extends State<StatefulWidget> {
     );
   }
 
-  Future<dynamic> onSelectNotification(payload) async{
-    if(payload == 'main'){
-      // Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) {
-      //
-      // }));
-    }
+  Future<dynamic> onSelectNotification(payload) async {
+    if (payload == 'chat') {}
   }
 
   @override
   void initState() {
-    super.initState();
+    print("Hello");
 
     FirebaseMessaging.onMessage.listen((message) {
       RemoteNotification? notification = message.notification;
       AndroidNotification? android = message.notification!.android;
-      if (notification != null && android != null) {
-        flutterLocalNotificationsPlugin.show(
-            notification.hashCode,
-            notification.title,
-            notification.body,
-            const NotificationDetails(
-                android: AndroidNotificationDetails("channel.id", "channel.name",
-                    color: Colors.blue,
-                    playSound: true,
-                    icon: URL_ICON)));
-      }
-    });
 
-    // final InitializationSettings initializationSettings = InitializationSettings(android: );
+      var messageRoom = MessageNotification.fromJson(message.data);
+
+      if (notification != null &&
+          android != null &&
+          messageRoom.senderID != userID) {
+        NotificationApi.showNotification(
+            notification.title!, notification.body!);
+      }
+
+      AwesomeNotifications().actionStream.listen((event) {
+        print("Notification " + event.toString());
+        Navigator.pushNamed(context, CommonRoutes.MAIN, arguments: {"id": ''});
+      });
+    });
 
     FirebaseMessaging.onMessageOpenedApp.listen((message) {
       print('A new onMessageOpenedApp event was published!');
       RemoteNotification? notification = message.notification;
       AndroidNotification? android = message.notification?.android;
 
-      
-      Navigator.pushNamed(context, CommonRoutes.MAIN, arguments: {
+      var messageRoom = MessageNotification.fromJson(message.data);
 
-      });
-
+      Navigator.pushNamed(context, CommonRoutes.MAIN,
+          arguments: {"id": messageRoom.roomID});
     });
 
-    FirebaseMessaging.instance.onTokenRefresh.listen((token) async {
+    FirebaseMessaging.instance.onTokenRefresh.listen((token) async {});
 
+    _firebaseMessaging.getToken().then((token) async {
       final fcmToken = await SharedPreferencesHelper.shared.getFCMToken();
 
-      if(fcmToken != token){
-        print("FCM TOKEN " + fcmToken!);
+      print("TOKEN1 " + token!);
 
-        await serviceManager.saveToken(userID, token, (data){
+      if (userID == "") {
+        userID = (await SharedPreferencesHelper.shared.getMyID())!;
+      }
+
+      if (fcmToken != token) {
+        print("TOKEN2 " + token!);
+
+        await serviceManager.saveToken(userID, token!, (data) async {
           var response = data as http.Response;
 
+          print("TOKEN2 Body " + response.body);
 
+          if (response.statusCode == 200) {
+            /// Save Token Local
+            await SharedPreferencesHelper.shared.setFCMToken(token);
+          } else {}
         });
       }
     });
 
-    _firebaseMessaging.getToken().then((token) async{
+    connectivity = Connectivity();
+    subscription =
+        connectivity.onConnectivityChanged.listen((ConnectivityResult result) {
+          print("Shuffle Connect " + result.toString());
+      if (result == ConnectivityResult.wifi ||
+          result == ConnectivityResult.mobile) {
+        SocketHelper.shared.connectSocket(userID);
 
-      // final fcmToken = await SharedPreferencesHelper.shared.getFCMToken();
-
-      print("FCM TOKEN " + token!);
-
-      serviceManager.saveToken(userID, token!, (data){
-        var response = data as http.Response;
-
-
-      });
-
-      // await print("FCM TOKEN " + fcmToken!);
-      //
-      //  if(fcmToken != token){
-      //
-      // }
+        Provider.of<UserProvider>(context, listen: false)
+            .getMe();
+      }
     });
 
     init();
 
-    // updateListView();
+    super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
   }
 
   void init() {
@@ -166,10 +184,20 @@ class ShuffleState extends State<StatefulWidget> {
       /// Get Me Successfully
       if (res.statusCode == 200) {
         UserAccount account = UserAccount.fromJson(json.decode(res.body));
-        _socketHelper.connectSocket(account.id);
+
+        /// Set Provider Account
+        Provider.of<UserProvider>(context, listen: false)
+            .setUserAccount(account);
+        SocketHelper.shared.connectSocket(account.id);
       } else {
-        showToast("The token is valid or out of date!", Colors.red);
-        Navigator.pushReplacementNamed(context, CommonRoutes.SIGNIN);
+        if(res.statusCode == 401){
+          showToast("The token is not invalid or out of date!", Colors.red);
+          Navigator.pushReplacementNamed(context, CommonRoutes.SIGNIN);
+        }
+        else{
+          showToast("", Colors.red);
+          Navigator.pushReplacementNamed(context, CommonRoutes.SIGNIN);
+        }
       }
     });
   }
@@ -178,6 +206,10 @@ class ShuffleState extends State<StatefulWidget> {
   Widget build(BuildContext context) {
     var heightAppBar = AppBar().preferredSize.height;
 
+    final roomShuffle = Provider.of<ShuffleProvider>(context);
+
+    final userProvider = Provider.of<UserProvider>(context);
+
     final roomsBloc = BlocProvider.of<ShuffleBloc>(context);
 
     return WillPopScope(
@@ -185,14 +217,16 @@ class ShuffleState extends State<StatefulWidget> {
             child: Scaffold(
           appBar: AppBar(
             leadingWidth: 90,
-            titleSpacing: -15,
+            titleSpacing: -20,
             title: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text(
-                  "Chatting",
-                  style: TextStyle(fontSize: 20),
+                  userProvider.user!.name! == null
+                      ? "User"
+                      : userProvider.user.name!,
+                  style: TextStyle(fontSize: 17),
                 ),
               ],
             ),
@@ -201,9 +235,9 @@ class ShuffleState extends State<StatefulWidget> {
                 child: Row(
                   children: [
                     icAvatar(
-                        URL_ICON,
-                        heightAppBar * 0.8,
-                        heightAppBar * 0.8,
+                        userProvider.user.picture,
+                        heightAppBar * 0.7,
+                        heightAppBar * 0.7,
                         () => {
                               Navigator.pushNamed(context, CommonRoutes.PROFILE)
                             })
@@ -228,25 +262,16 @@ class ShuffleState extends State<StatefulWidget> {
             child: Column(
               children: [
                 _listShuffle(roomsBloc),
-                // RefreshIndicator(
-                //     child: Consumer<RoomProvider>(
-                //       builder: (context, roomProvider, child) =>
-                //           roomProvider.items.isEmpty
-                //               ? child!
-                //               : listShuffleProvider(roomProvider.items),
-                //       child: const Text("Error"),
-                //     ),
-                //     onRefresh: () =>
-                //         context.read<RoomProvider>().fetchAllRoom())
               ],
             ),
           ),
           bottomNavigationBar: BottomNavigationBar(
+
             items: const [
               BottomNavigationBarItem(
-                  icon: Icon(Icons.home), title: Text("Home")),
+                  icon: Icon(Icons.home), label: "Home"),
               BottomNavigationBarItem(
-                  icon: Icon(Icons.chat_bubble), title: Text("Chatting"))
+                  icon: Icon(Icons.chat_bubble), label: "Chatting")
             ],
             currentIndex: _selectedIndex,
             onTap: _tapItem,
@@ -261,6 +286,10 @@ class ShuffleState extends State<StatefulWidget> {
     });
   }
 
+  buildShuffle(){
+
+  }
+
   _signOut() async {
     var userID = await SharedPreferencesHelper.shared.getMyID() as String;
 
@@ -273,6 +302,10 @@ class ShuffleState extends State<StatefulWidget> {
       Navigator.of(context, rootNavigator: true).pop();
 
       if (response.statusCode == 200) {
+        print("TOKEN2 Body " + response.body);
+
+        userID = "";
+
         /// Set Token Server
         await UserSecurityStorage.setToken("");
         // _socketHelper.disConnect();
@@ -284,11 +317,20 @@ class ShuffleState extends State<StatefulWidget> {
         /// Remove Token
         await SharedPreferencesHelper.shared.removeToken();
 
+        /// REMOVE FCM TOKEN
+        await SharedPreferencesHelper.shared.setFCMToken("");
+
         /// Socket disconnect
         SocketHelper.shared.logout();
 
         /// Push to SIGN IN Screen
-        Navigator.pushReplacementNamed(context, CommonRoutes.SIGNIN);
+        Navigator.pushAndRemoveUntil<dynamic>(
+          context,
+          MaterialPageRoute<dynamic>(
+            builder: (BuildContext context) => Signin(),
+          ),
+          (route) => false, //if you want to disable back feature set to false
+        );
       } else {
         showToast("Cannot Sign Out !!!", Colors.red);
       }
@@ -331,12 +373,11 @@ class ShuffleState extends State<StatefulWidget> {
   onBack() {}
 
   void showToast(String message, Color color) {
-    Fluttertoast.showToast(
-      msg: message,
-      toastLength: Toast.LENGTH_SHORT,
-      backgroundColor: color,
-      textColor: Colors.white,
-      gravity: ToastGravity.BOTTOM,
-    );
+    final snackBar = SnackBar(
+        content: Text(
+      message,
+      style: TextStyle(color: color),
+    ));
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 }
